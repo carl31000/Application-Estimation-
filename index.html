@@ -1,531 +1,134 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="fr">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Estimation rapide – Version Simplifiée (Commerciaux)</title>
-<meta name="color-scheme" content="dark">
+<meta charset="UTF-8">
+<title>Estimation Chantier</title>
 <style>
-  :root { color-scheme: dark; }
-  *{box-sizing:border-box}
-  body{margin:0;background:#0b0d10;color:#e9eef7;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto}
-  .wrap{max-width:980px;margin:0 auto;padding:18px}
-  .h1{font-weight:700;font-size:20px;margin:4px 0 12px}
-  .muted{color:#a9b4c0}
-  .grid{display:grid;gap:10px}
-  @media(min-width:860px){ .grid.cols-2{grid-template-columns:1fr 1fr} .grid.cols-3{grid-template-columns:1fr 1fr 1fr} }
-  .card{border:1px solid #2b3340;border-radius:16px;overflow:hidden;margin:12px 0}
-  .cardh{background:#171a1f;padding:10px 14px;border-bottom:1px solid #2b3340;font-weight:600;display:flex;justify-content:space-between;align-items:center}
-  .cardb{padding:12px 14px}
-  .row{display:grid;gap:10px;margin:10px 0}
-  @media(min-width:700px){ .row.cols-2{grid-template-columns:1fr 1fr} .row.cols-3{grid-template-columns:1fr 1fr 1fr} }
-  .inp,.sel{background:#1f2430;border:1px solid #2b3340;border-radius:12px;color:#e9eef7;padding:10px;width:100%}
-  .opt{display:flex;gap:10px;flex-wrap:wrap}
-  .pill input{display:none}
-  .pill label{display:inline-block;border:1px solid #2b3340;background:#1b202b;padding:8px 12px;border-radius:999px;cursor:pointer}
-  .pill input:checked + label{background:#253045;border-color:#335;box-shadow:0 0 0 2px #2e3b52 inset}
-  .toolbar{position:sticky;top:0;z-index:5;background:#0b0d10e6;border-bottom:1px solid #232830;padding:10px 14px;display:flex;gap:8px;align-items:center}
-  .title{font-weight:700}
-  .btn{background:#1f2430;border:1px solid #2b3340;color:#e9eef7;border-radius:10px;padding:8px 12px;cursor:pointer}
-  .btn:hover{background:#2a3140}
-  .totals{display:grid;gap:10px;margin-top:10px}
-  @media(min-width:860px){ .totals{grid-template-columns:1fr 1fr 1fr} }
-  .tbox{border:1px solid #2b3340;border-radius:14px;padding:12px 14px}
-  .big{font-size:22px;font-weight:700}
-  .hl{color:#9bc9ff}
-  .hint{font-size:12px;color:#98a7b6;margin-top:4px}
+  body { font-family: Arial, sans-serif; margin: 20px; }
+  table { border-collapse: collapse; width: 100%; margin-bottom: 40px; }
+  th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+  th { background-color: #f0f0f0; }
+  input { width: 100%; box-sizing: border-box; }
+  .lot-title { background: #ddd; font-weight: bold; }
+  .total-lot { font-weight: bold; background: #f9f9f9; }
+  .total-global { font-size: 1.2em; font-weight: bold; background: #cde; }
 </style>
 </head>
 <body>
-<div class="toolbar">
-  <div class="title">Estimation – Mode Simplifié</div>
-  <button class="btn" id="reset">Réinitialiser</button>
-  <button class="btn" id="export">Exporter CSV</button>
-  <div style="margin-left:auto;display:flex;gap:8px;align-items:center">
-    <input class="inp" id="client" placeholder="Client" style="max-width:180px">
-    <input class="inp" id="chantier" placeholder="Chantier" style="max-width:220px">
-    <input class="inp" id="ref" placeholder="Réf." style="max-width:120px">
-    <select class="sel" id="tva" style="max-width:120px">
-      <option value="0.055">TVA 5,5%</option>
-      <option value="0.1" selected>TVA 10%</option>
-      <option value="0.2">TVA 20%</option>
-    </select>
-  </div>
-</div>
 
-<div class="wrap">
-  <div class="h1">1) Surfaces de base</div>
-  <div class="card">
-    <div class="cardh">Mesures rapides</div>
-    <div class="cardb grid cols-3">
-      <div><div class="muted">Surface habitable (m²)</div><input id="surf" type="number" class="inp" min="0" step="0.1" placeholder="ex: 70"></div>
-      <div><div class="muted">Sol carrelé/zone humide (m²)</div><input id="surf_humide" type="number" class="inp" min="0" step="0.1" placeholder="ex: 12"></div>
-      <div><div class="muted">Plinthes (ml)</div><input id="plinthes" type="number" class="inp" min="0" step="0.1" placeholder="ex: 60"></div>
-    </div>
-    <div class="cardb hint">Astuce : donne une surface globale, puis précise les zones humides (SDB/WC/cuisine) pour le carrelage/faïence.</div>
-  </div>
+<h1>Estimation chantier</h1>
 
-  <div class="h1">2) Sols</div>
-  <div class="card">
-    <div class="cardh">Type de revêtement principal</div>
-    <div class="cardb">
-      <div class="opt pill">
-        <span><input type="radio" name="sol" id="sol_spc" value="spc" checked><label for="sol_spc">SPC / stratifié standard</label></span>
-        <span><input type="radio" name="sol" id="sol_cc" value="contrecolle"><label for="sol_cc">Parquet contrecollé (+value)</label></span>
-        <span><input type="radio" name="sol" id="sol_massif" value="massif"><label for="sol_massif">Parquet massif (+value++)</label></span>
-      </div>
-      <div class="row cols-2">
-        <div><div class="muted">Ragréage partiel nécessaire ?</div>
-          <select id="sol_rag" class="sel">
-            <option value="non" selected>Non</option>
-            <option value="oui">Oui (+ ragréage)</option>
-          </select>
-        </div>
-        <div><div class="muted">Barres de seuil (u)</div><input id="seuils" type="number" class="inp" min="0" step="1" placeholder="ex: 3"></div>
-      </div>
-      <div class="hint">Le prix s’adapte automatiquement : pose, sous-couche/colle, +values parquet si sélectionné.</div>
-    </div>
-  </div>
-
-  <div class="h1">3) Murs & peintures</div>
-  <div class="card">
-    <div class="cardh">Finition peinture</div>
-    <div class="cardb">
-      <div class="row cols-2">
-        <div>
-          <div class="muted">Niveau de préparation</div>
-          <select id="paint_prep" class="sel">
-            <option value="standard" selected>Standard (rebouchage + impression)</option>
-            <option value="ratissage">Ratissage complet (2 passes)</option>
-          </select>
-        </div>
-        <div>
-          <div class="muted">Hauteur sous plafond</div>
-          <select id="paint_hsp" class="sel">
-            <option value="hsp_std" selected>≤ 2,8 m</option>
-            <option value="hsp_haute">> 2,8 m (+value)</option>
-          </select>
-        </div>
-      </div>
-      <div class="row cols-3">
-        <div><div class="muted">Boiseries à peindre (faces)</div><input id="bois_faces" class="inp" type="number" min="0" step="1" placeholder="ex: 8"></div>
-        <div><div class="muted">Plinthes à peindre (ml)</div><input id="plinthes_peint" class="inp" type="number" min="0" step="0.1" placeholder="ex: 60"></div>
-        <div><div class="muted">Joints acryliques menuiseries</div>
-          <select id="joints" class="sel">
-            <option value="non" selected>Non</option>
-            <option value="oui">Oui (forfait)</option>
-          </select>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="h1">4) Zones humides (carrelage/faïence)</div>
-  <div class="card">
-    <div class="cardh">SDB / WC / cuisine</div>
-    <div class="cardb">
-      <div class="row cols-3">
-        <div><div class="muted">Sol carrelé (m²)</div><input id="carrelage_sol" class="inp" type="number" min="0" step="0.1" placeholder="= zones humides"></div>
-        <div><div class="muted">Faïence murale (m²)</div><input id="faience" class="inp" type="number" min="0" step="0.1" placeholder="ex: 15"></div>
-        <div><div class="muted">Grand format ?</div>
-          <select id="carrelage_gf" class="sel">
-            <option value="non" selected>Non</option>
-            <option value="oui">Oui (+value pose)</option>
-          </select>
-        </div>
-      </div>
-      <div class="row cols-3">
-        <div><div class="muted">SPEC douche (m²)</div><input id="spec" class="inp" type="number" min="0" step="0.1" placeholder="ex: 8"></div>
-        <div><div class="muted">Baguettes/retours (ml)</div><input id="baguette" class="inp" type="number" min="0" step="0.1" placeholder="ex: 6"></div>
-        <div><div class="muted">Nattes / ragréage auto</div>
-          <select id="carrelage_rag" class="sel">
-            <option value="non" selected>Non</option>
-            <option value="oui">Oui (primaire + ragréage)</option>
-          </select>
-        </div>
-      </div>
-      <div class="row cols-3">
-        <div><div class="muted">Barres de seuil (u)</div><input id="seuils_carr" class="inp" type="number" min="0" step="1" placeholder="ex: 2"></div>
-        <div><div class="muted">Plinthes carrelage (ml)</div><input id="plinthes_carr" class="inp" type="number" min="0" step="0.1" placeholder="ex: 12"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="h1">5) Plomberie SDB (packs)</div>
-  <div class="card">
-    <div class="cardh">Choix rapide</div>
-    <div class="cardb">
-      <div class="opt pill">
-        <span><input type="radio" name="sdb" id="sdb_std" value="standard" checked><label for="sdb_std">Pack SDB Standard (meuble simple + receveur + colonne)</label></span>
-        <span><input type="radio" name="sdb" id="sdb_premium" value="premium"><label for="sdb_premium">Pack SDB Premium (colonnes encastrées, + alims)</label></span>
-        <span><input type="radio" name="sdb" id="sdb_none" value="none"><label for="sdb_none">Aucune pose SDB</label></span>
-      </div>
-      <div class="row cols-3">
-        <div><div class="muted">Nb. SDB</div><input id="nb_sdb" class="inp" type="number" min="0" step="1" value="1"></div>
-        <div><div class="muted">Nb. WC (classique)</div><input id="nb_wc" class="inp" type="number" min="0" step="1" value="1"></div>
-        <div><div class="muted">WC suspendu ?</div>
-          <select id="wc_suspendu" class="sel">
-            <option value="non" selected>Non</option>
-            <option value="oui">Oui (pose)</option>
-          </select>
-        </div>
-      </div>
-      <div class="hint">Le pack inclut alimentations/évacuations usuelles. Tu peux affiner ensuite côté bureau.</div>
-    </div>
-  </div>
-
-  <div class="h1">6) Électricité (packs)</div>
-  <div class="card">
-    <div class="cardh">Choix rapide</div>
-    <div class="cardb">
-      <div class="opt pill">
-        <span><input type="radio" name="elec" id="elec_leger" value="leger" checked><label for="elec_leger">Léger (prises + points lumineux standard)</label></span>
-        <span><input type="radio" name="elec" id="elec_std" value="standard"><label for="elec_std">Standard (+ circuits directs cuisine)</label></span>
-        <span><input type="radio" name="elec" id="elec_renfo" value="renforce"><label for="elec_renfo">Renforcé (+ spots + saignées)</label></span>
-      </div>
-      <div class="row cols-3">
-        <div><div class="muted">Prises / 10 m²</div>
-          <select id="prises_dens" class="sel">
-            <option value="bas">Bas</option>
-            <option value="moyen" selected>Moyen</option>
-            <option value="haut">Haut</option>
-          </select>
-        </div>
-        <div><div class="muted">Nb. spots/app. sup.</div><input id="spots" class="inp" type="number" min="0" step="1" placeholder="ex: 8"></div>
-        <div><div class="muted">Sécurité réseau existant ?</div>
-          <select id="mise_sec" class="sel">
-            <option value="non" selected>Non</option>
-            <option value="oui">Oui (forfait chantier)</option>
-          </select>
-        </div>
-      </div>
-      <div class="hint">La densité adapte le nombre de prises et points lumineux automatiquement.</div>
-    </div>
-  </div>
-
-  <div class="h1">7) Chauffage / Clim – Scénarios</div>
-  <div class="card">
-    <div class="cardh">Sélection guidée</div>
-    <div class="cardb">
-      <div class="opt pill">
-        <span><input type="radio" name="chauff" id="ch_keep" value="garder" checked><label for="ch_keep">Garder existant (0 €)</label></span>
-        <span><input type="radio" name="chauff" id="ch_elec" value="elec"><label for="ch_elec">Électrique + chauffe-eau</label></span>
-        <span><input type="radio" name="chauff" id="ch_split" value="split"><label for="ch_split">PAC air/air – Splits (par pièce)</label></span>
-        <span><input type="radio" name="chauff" id="ch_gain" value="gainable"><label for="ch_gain">PAC air/air – Gainable + VMC</label></span>
-        <span><input type="radio" name="chauff" id="ch_gaz" value="gaz"><label for="ch_gaz">Chaudière gaz + radiateurs</label></span>
-      </div>
-      <div class="row cols-3">
-        <div><div class="muted">Nb. pièces à chauffer/refroidir</div><input id="nb_pieces" class="inp" type="number" min="0" step="1" placeholder="ex: 4"></div>
-        <div><div class="muted">Surface “jour” (m²) si gainable</div><input id="surf_gain" class="inp" type="number" min="0" step="0.1" placeholder="ex: 45"></div>
-        <div><div class="muted">VMC simple flux ?</div>
-          <select id="vmc" class="sel">
-            <option value="non" selected>Non</option>
-            <option value="oui">Oui</option>
-          </select>
-        </div>
-      </div>
-      <div class="hint">Règles simples : split ≈ 1 unité intérieure/zone ; gainable pour la zone jour principale ; VMC en option si non prévue.</div>
-    </div>
-  </div>
-
-  <div class="h1">Totaux</div>
-  <div class="totals">
-    <div class="tbox"><div class="muted">Total HT</div><div class="big" id="totHT">0,00 €</div></div>
-    <div class="tbox"><div class="muted">TVA</div><div class="big" id="totTVA">0,00 €</div></div>
-    <div class="tbox"><div class="muted">Total TTC</div><div class="big hl" id="totTTC">0,00 €</div></div>
-  </div>
-
-  <div class="hint" style="margin-top:10px">
-    Remarque : modèle “ordre de grandeur” pour commerciaux. Toi, tu pourras affiner au bureau et exporter vers Excel/Obat.
-  </div>
-</div>
+<div id="app"></div>
 
 <script>
-const € = n => (n||0).toLocaleString('fr-FR',{style:'currency',currency:'EUR'});
-
-/* ===== PRIX SIMPLIFIÉS (ajuste ici) ===== */
-const PRICES = {
-  sols: {
-    base_spc: { fourniture: 30, pose: 30, sous_couche: 15 }, // €/m²
-    plus_contrecollé: 30, // + €/m²
-    plus_massif: 60,      // + €/m²
-    ragreage: 22,         // €/m² si sélectionné
-    seuil: 90,            // €/u
-  },
-  peinture: {
-    prep_std: 6, ratissage: 12, impression: 6, finition: 15, // €/m²
-    hsp_plus: 5, boiserie_face: 70, plinthes_ml: 9, joints_forfait: 400
-  },
-  carrelage: {
-    primaire: 10, ragreage: 22, natte: 21,
-    fourniture: 30, pose: 65, joints: 25, seuil: 90, plinthes_ml: 16,
-    faience_pose: 65, baguette_ml: 12, spec: 20,
-    plus_grand_format: 15 // €/m² pose
-  },
-  sdb: {
-    // Prix pack par SDB
-    standard: { alims_evacs: 350, receveur_pose: 170, colonne: 90, meuble: 160, wc_classique: 120 },
-    premium:  { alims_evacs: 550, receveur_pose: 170, colonne_enc: 190, meuble: 220, wc_classique: 120 },
-    wc_suspendu_pose: 220
-  },
-  elec: {
-    prise: 70, point_lum: 90, va_et_vient: 110, spot: 35,
-    ligne_directe: 110, mise_securite: 280, saignee_forfait: 1400
-  },
-  chauffage: {
-    split_ui: 950, // “pack” unité intérieure + part installation (€/UI)
-    gainable_pack: 4150, // ensemble (UE + réseau jour)
-    vmc: 750,
-    elec_convecteur_m2: 18, // estimation €/m²
-    chauffe_eau_forfait: 900,
-    gaz_chaudiere: 3500, rad_m2: 35 // très indicatif
-  }
+const lots = {
+  "Démolition": [
+    {desc: "Dépose cuisine existante", pu: 400},
+    {desc: "Dépose éléments sanitaires (SDB)", pu: 400},
+    {desc: "Dépose revêtement sol (parquet, lino, carrelage)", pu: 15},
+    {desc: "Dépose cloison", pu: 50},
+    {desc: "Évacuation gravats", pu: 280}
+  ],
+  "Sols": [
+    {desc: "Ragréage complet (préparation + primaire)", pu: 22},
+    {desc: "Pose carrelage sol (préparation + pose + croisillons)", pu: 65},
+    {desc: "Pose parquet stratifié (préparation + pose + plinthes)", pu: 45},
+    {desc: "Pose parquet contrecollé", pu: 55},
+    {desc: "Pose parquet massif", pu: 75}
+  ],
+  "Murs": [
+    {desc: "Pose faïence murale (préparation + pose + croisillons)", pu: 65},
+    {desc: "Pose joints faïence (préparation + pose + accessoires)", pu: 25},
+    {desc: "Peinture finition murs/plafonds", pu: 28},
+    {desc: "Pose papier peint / revêtement mural", pu: 32}
+  ],
+  "Plomberie": [
+    {desc: "Pose WC complet", pu: 450},
+    {desc: "Pose meuble vasque", pu: 550},
+    {desc: "Pose douche complète", pu: 1800},
+    {desc: "Pose baignoire", pu: 1200}
+  ],
+  "Électricité": [
+    {desc: "Pose prise électrique", pu: 80},
+    {desc: "Pose spot / point lumineux", pu: 90},
+    {desc: "Pose tableau électrique complet", pu: 1800}
+  ],
+  "Menuiseries": [
+    {desc: "Pose porte intérieure", pu: 250},
+    {desc: "Pose fenêtre PVC double vitrage", pu: 750},
+    {desc: "Pose baie vitrée", pu: 1200}
+  ],
+  "Chauffage": [
+    {desc: "Pose chaudière gaz (fourniture + préparation nourrice)", pu: 3500},
+    {desc: "Pose chauffe-eau électrique (fourniture + préparation nourrice)", pu: 850},
+    {desc: "Pose chauffe-eau thermodynamique", pu: 2200},
+    {desc: "Pose radiateur électrique", pu: 350},
+    {desc: "Pose radiateur eau chaude", pu: 420},
+    {desc: "Pose sèche-serviettes", pu: 300},
+    {desc: "Pose plancher chauffant hydraulique", pu: 90},
+    {desc: "Pose plancher chauffant électrique", pu: 75},
+    {desc: "Pose PAC air/eau", pu: 8500},
+    {desc: "Pose PAC air/air", pu: 6500}
+  ]
 };
 
-/* ===== ÉTAT ===== */
-let state = JSON.parse(localStorage.getItem('simp_state')||'null') || {
-  client:"", chantier:"", ref:"", tva:0.10,
-  surf:0, surf_humide:0, plinthes:0,
-  sol_type:"spc", sol_rag:"non", seuils:0,
-  paint_prep:"standard", paint_hsp:"hsp_std", bois_faces:0, plinthes_peint:0, joints:"non",
-  carrelage_sol:0, faience:0, carrelage_gf:"non", spec:0, baguette:0, carrelage_rag:"non", seuils_carr:0, plinthes_carr:0,
-  sdb_pack:"standard", nb_sdb:1, nb_wc:1, wc_suspendu:"non",
-  elec_pack:"leger", prises_dens:"moyen", spots:0, mise_sec:"non",
-  chauff:"garder", nb_pieces:0, surf_gain:0, vmc:"non"
-};
+function renderTable(){
+  let html = "";
+  let totalGlobal = 0;
 
-const els = {
-  client:       document.getElementById('client'),
-  chantier:     document.getElementById('chantier'),
-  ref:          document.getElementById('ref'),
-  tva:          document.getElementById('tva'),
-  surf:         document.getElementById('surf'),
-  surf_humide:  document.getElementById('surf_humide'),
-  plinthes:     document.getElementById('plinthes'),
-  seuils:       document.getElementById('seuils'),
-  sol_rag:      document.getElementById('sol_rag'),
-  sol_radios:   [...document.querySelectorAll('input[name="sol"]')],
-  paint_prep:   document.getElementById('paint_prep'),
-  paint_hsp:    document.getElementById('paint_hsp'),
-  bois_faces:   document.getElementById('bois_faces'),
-  plinthes_peint: document.getElementById('plinthes_peint'),
-  joints:       document.getElementById('joints'),
-  carrelage_sol:document.getElementById('carrelage_sol'),
-  faience:      document.getElementById('faience'),
-  carrelage_gf: document.getElementById('carrelage_gf'),
-  spec:         document.getElementById('spec'),
-  baguette:     document.getElementById('baguette'),
-  carrelage_rag:document.getElementById('carrelage_rag'),
-  seuils_carr:  document.getElementById('seuils_carr'),
-  plinthes_carr:document.getElementById('plinthes_carr'),
-  sdb_radios:   [...document.querySelectorAll('input[name="sdb"]')],
-  nb_sdb:       document.getElementById('nb_sdb'),
-  nb_wc:        document.getElementById('nb_wc'),
-  wc_suspendu:  document.getElementById('wc_suspendu'),
-  elec_radios:  [...document.querySelectorAll('input[name="elec"]')],
-  prises_dens:  document.getElementById('prises_dens'),
-  spots:        document.getElementById('spots'),
-  mise_sec:     document.getElementById('mise_sec'),
-  chauff_radios:[...document.querySelectorAll('input[name="chauff"]')],
-  nb_pieces:    document.getElementById('nb_pieces'),
-  surf_gain:    document.getElementById('surf_gain'),
-  vmc:          document.getElementById('vmc'),
-  reset:        document.getElementById('reset'),
-  exportBtn:    document.getElementById('export'),
-  totHT:        document.getElementById('totHT'),
-  totTVA:       document.getElementById('totTVA'),
-  totTTC:       document.getElementById('totTTC')
-};
+  for(const [lot, items] of Object.entries(lots)){
+    html += `<table><tr><th colspan="5" class="lot-title">${lot}</th></tr>`;
+    html += `<tr><th>Description produit</th><th>Prix unitaire (€)</th><th>Quantité</th><th>Remarque</th><th>Total (€)</th></tr>`;
+    let totalLot = 0;
 
-function save(){ localStorage.setItem('simp_state', JSON.stringify(state)); }
-function num(v){ const n = Number(v); return isNaN(n)?0:n; }
+    items.forEach((item, idx) => {
+      html += `<tr>
+        <td>${item.desc}</td>
+        <td><input type="number" value="${item.pu}" min="0" step="0.01" 
+            oninput="updateTotal(this, '${lot}', ${idx})"></td>
+        <td><input type="number" value="0" min="0" step="0.1" 
+            oninput="updateTotal(this, '${lot}', ${idx})"></td>
+        <td><input type="text" placeholder="Remarque" 
+            oninput="updateTotal(this, '${lot}', ${idx})"></td>
+        <td id="total-${lot}-${idx}">0</td>
+      </tr>`;
+    });
 
-function bind(){
-  // champs simples
-  ['client','chantier','ref'].forEach(k=> els[k].value = state[k]);
-  els.tva.value = String(state.tva);
-
-  // surfaces
-  ['surf','surf_humide','plinthes','seuils','bois_faces','plinthes_peint','carrelage_sol','faience','spec','baguette','seuils_carr','plinthes_carr','nb_sdb','nb_wc','spots','nb_pieces','surf_gain']
-    .forEach(k=>{ els[k].value = state[k]; els[k].oninput = e=>{ state[k]=num(e.target.value); save(); calc(); }; });
-
-  // selects
-  ['sol_rag','paint_prep','paint_hsp','joints','carrelage_gf','carrelage_rag','wc_suspendu','prises_dens','mise_sec','vmc']
-    .forEach(k=>{ els[k].value = state[k]; els[k].onchange = e=>{ state[k]=e.target.value; save(); calc(); }; });
-
-  // radios
-  els.sol_radios.forEach(r=>{ r.checked = (state.sol_type===r.value); r.onchange = ()=>{ state.sol_type=r.value; save(); calc(); }; });
-  els.sdb_radios.forEach(r=>{ r.checked = (state.sdb_pack===r.value); r.onchange = ()=>{ state.sdb_pack=r.value; save(); calc(); }; });
-  els.elec_radios.forEach(r=>{ r.checked = (state.elec_pack===r.value); r.onchange = ()=>{ state.elec_pack=r.value; save(); calc(); }; });
-  els.chauff_radios.forEach(r=>{ r.checked = (state.chauff===r.value); r.onchange = ()=>{ state.chauff=r.value; save(); calc(); }; });
-
-  // text inputs & TVA
-  ['client','chantier','ref'].forEach(k=> els[k].oninput = e=>{ state[k]=e.target.value; save(); });
-  els.tva.onchange = e=>{ state.tva = Number(e.target.value)||0; save(); calc(); };
-
-  // reset & export
-  els.reset.onclick = ()=>{
-    localStorage.removeItem('simp_state'); state=null; location.reload();
-  };
-  els.exportBtn.onclick = exportCSV;
-
-  calc();
-}
-
-function calc(){
-  const S = state; const P = PRICES;
-  const surf = num(S.surf);
-  const surfHum = Math.min(num(S.surf_humide), surf);
-  const surfSec = Math.max(surf - surfHum, 0);
-
-  // --- SOLS ---
-  let sols_ht = 0;
-  // base SPC (qu'on ajuste par type de parquet)
-  let pu = P.sols.base_spc.fourniture + P.sols.base_spc.pose + P.sols.base_spc.sous_couche; // €/m²
-  if(S.sol_type==='contrecollé') pu += P.sols.plus_contrecollé;
-  if(S.sol_type==='massif')      pu += P.sols.plus_massif;
-  sols_ht += pu * surfSec;
-  if(S.sol_rag==='oui') sols_ht += P.sols.ragreage * surfSec;
-  sols_ht += P.sols.seuil * num(S.seuils);
-
-  // --- PEINTURE (estimation simple : on approx murs+plafonds ~ 3x surface) ---
-  const surfPeinture = surf * 3;
-  let peinture_ht = 0;
-  const prep = (S.paint_prep==='ratissage') ? P.peinture.ratissage : P.peinture.prep_std + P.peinture.impression;
-  peinture_ht += (prep + P.peinture.finition) * surfPeinture;
-  if(S.paint_hsp==='hsp_haute') peinture_ht += P.peinture.hsp_plus * surfPeinture;
-  peinture_ht += P.peinture.boiserie_face * num(S.bois_faces);
-  peinture_ht += P.peinture.plinthes_ml * num(S.plinthes_peint);
-  if(S.joints==='oui') peinture_ht += P.peinture.joints_forfait;
-
-  // --- CARRELAGE / FAÏENCE sur surfHum ---
-  let carr_ht = 0;
-  const ch = P.carrelage;
-  const surfCarr = Math.min(num(S.carrelage_sol)||surfHum, surfHum);
-  if(surfCarr>0){
-    carr_ht += (ch.primaire + ch.fourniture + ch.pose + ch.joints) * surfCarr;
-    if(S.carrelage_gf==='oui') carr_ht += ch.plus_grand_format * surfCarr;
-    if(S.carrelage_rag==='oui') carr_ht += (ch.primaire + ch.ragreage) * surfCarr;
-    carr_ht += ch.seuil * num(S.seuils_carr);
-    carr_ht += ch.plinthes_ml * num(S.plinthes_carr);
+    html += `<tr><td colspan="4" class="total-lot">Total ${lot}</td><td id="total-lot-${lot}">0</td></tr></table>`;
   }
-  carr_ht += ch.spec * num(S.spec);
-  carr_ht += ch.faience_pose * num(S.faience);
-  carr_ht += ch.baguette_ml * num(S.baguette);
 
-  // --- PLOMBERIE SDB (packs) ---
-  let sdb_ht = 0;
-  const nbSdb = num(S.nb_sdb);
-  const nbWc  = num(S.nb_wc);
-  if(S.sdb_pack==='standard'){
-    sdb_ht += nbSdb * (PRICES.sdb.standard.alims_evacs + PRICES.sdb.standard.receveur_pose + PRICES.sdb.standard.colonne + PRICES.sdb.standard.meuble);
-  }else if(S.sdb_pack==='premium'){
-    sdb_ht += nbSdb * (PRICES.sdb.premium.alims_evacs + PRICES.sdb.premium.receveur_pose + PRICES.sdb.premium.colonne_enc + PRICES.sdb.premium.meuble);
-  }
-  sdb_ht += nbWc * PRICES.sdb.standard.wc_classique;
-  if(S.wc_suspendu==='oui') sdb_ht += PRICES.sdb.wc_suspendu_pose;
+  html += `<table><tr><td colspan="4" class="total-global">TOTAL GLOBAL</td><td class="total-global" id="total-global">0</td></tr></table>`;
 
-  // --- ÉLECTRICITÉ (packs) ---
-  let elec_ht = 0;
-  // densité prises/points lumières par 10 m²
-  const densMap = { bas: {prises:1, lum:1}, moyen:{prises:2, lum:1}, haut:{prises:3, lum:2} };
-  const d = densMap[S.prises_dens] || densMap.moyen;
-  const blocs = Math.ceil(surf/10);
-  // base
-  elec_ht += blocs * (d.prises * PRICES.elec.prise + d.lum * PRICES.elec.point_lum);
-  // pack
-  if(S.elec_pack==='standard'){ elec_ht += 5*PRICES.elec.ligne_directe; }     // circuits cuisine
-  if(S.elec_pack==='renforce'){ elec_ht += 5*PRICES.elec.ligne_directe + PRICES.elec.saignee_forfait; }
-  elec_ht += num(S.spots) * PRICES.elec.spot;
-  if(S.mise_sec==='oui') elec_ht += PRICES.elec.mise_securite;
-
-  // --- CHAUFFAGE / CLIM scénarios ---
-  let chauf_ht = 0;
-  if(S.chauff==='elec'){
-    chauf_ht += surf * PRICES.chauffage.elec_convecteur_m2 + PRICES.chauffage.chauffe_eau_forfait;
-  }else if(S.chauff==='split'){
-    chauf_ht += num(S.nb_pieces) * PRICES.chauffage.split_ui;
-  }else if(S.chauff==='gainable'){
-    chauf_ht += PRICES.chauffage.gainable_pack; // zone jour incluse
-    if(S.vmc==='oui') chauf_ht += PRICES.chauffage.vmc;
-  }else if(S.chauff==='gaz'){
-    chauf_ht += PRICES.chauffage.gaz_chaudiere + surf * PRICES.chauffage.rad_m2; // très indicatif
-  } // garder existant = 0 €
-
-  // --- TOTAUX ---
-  const ht = sols_ht + peinture_ht + carr_ht + sdb_ht + elec_ht + chauf_ht;
-  const tva = ht * (Number(state.tva)||0);
-  const ttc = ht + tva;
-
-  els.totHT.textContent = €(ht);
-  els.totTVA.textContent = €(tva);
-  els.totTTC.textContent = €(ttc);
+  document.getElementById('app').innerHTML = html;
 }
 
-function exportCSV(){
-  const rows = [];
-  const push = (arr)=>rows.push(arr.map(v=>String(v)).join(";"));
-  push(["Client", state.client]);
-  push(["Chantier", state.chantier]);
-  push(["Réf", state.ref]);
-  push(["TVA", state.tva]);
-  push([]);
-  push(["Rubrique","Détail","Valeur"]);
-  push(["Surfaces","Habitable (m²)", state.surf]);
-  push(["Surfaces","Zones humides (m²)", state.surf_humide]);
-  push(["Surfaces","Plinthes (ml)", state.plinthes]);
+function updateTotal(el, lot, idx){
+  const row = el.parentNode.parentNode;
+  const pu = parseFloat(row.children[1].children[0].value) || 0;
+  const qty = parseFloat(row.children[2].children[0].value) || 0;
+  const total = pu * qty;
+  document.getElementById(`total-${lot}-${idx}`).textContent = total.toFixed(2);
 
-  push(["Sols","Type", state.sol_type]);
-  push(["Sols","Ragréage", state.sol_rag]);
-  push(["Sols","Barres de seuil (u)", state.seuils]);
+  // recalcul total lot
+  let totalLot = 0;
+  const table = row.closest('table');
+  const rows = table.querySelectorAll('td[id^="total-"]');
+  rows.forEach(r => {
+    if(r.id.startsWith(`total-${lot}-`) && !r.id.includes("lot")){
+      totalLot += parseFloat(r.textContent) || 0;
+    }
+  });
+  document.getElementById(`total-lot-${lot}`).textContent = totalLot.toFixed(2);
 
-  push(["Peinture","Préparation", state.paint_prep]);
-  push(["Peinture","HSP", state.paint_hsp]);
-  push(["Peinture","Boiseries (faces)", state.bois_faces]);
-  push(["Peinture","Plinthes peintes (ml)", state.plinthes_peint]);
-  push(["Peinture","Joints acryliques", state.joints]);
-
-  push(["Carrelage","Sol (m²)", state.carrelage_sol]);
-  push(["Carrelage","Faïence (m²)", state.faience]);
-  push(["Carrelage","Grand format", state.carrelage_gf]);
-  push(["Carrelage","SPEC (m²)", state.spec]);
-  push(["Carrelage","Baguettes (ml)", state.baguette]);
-  push(["Carrelage","Ragréage/natte", state.carrelage_rag]);
-  push(["Carrelage","Seuils (u)", state.seuils_carr]);
-  push(["Carrelage","Plinthes (ml)", state.plinthes_carr]);
-
-  push(["SDB","Pack", state.sdb_pack]);
-  push(["SDB","Nb SDB", state.nb_sdb]);
-  push(["SDB","Nb WC", state.nb_wc]);
-  push(["SDB","WC suspendu", state.wc_suspendu]);
-
-  push(["Électricité","Pack", state.elec_pack]);
-  push(["Électricité","Densité prises/lumière", state.prises_dens]);
-  push(["Électricité","Spots supplémentaires", state.spots]);
-  push(["Électricité","Mise en sécurité", state.mise_sec]);
-
-  push(["Chauffage","Scénario", state.chauff]);
-  push(["Chauffage","Nb pièces (splits)", state.nb_pieces]);
-  push(["Chauffage","Surf jour (gainable)", state.surf_gain]);
-  push(["Chauffage","VMC", state.vmc]);
-
-  // Totaux
-  const ht = els.totHT.textContent;
-  const tva = els.totTVA.textContent;
-  const ttc = els.totTTC.textContent;
-  push([]);
-  push(["TOTALS","HT", ht]);
-  push(["TOTALS","TVA", tva]);
-  push(["TOTALS","TTC", ttc]);
-
-  const blob = new Blob(["\ufeff"+rows.join("\n")],{type:"text/csv;charset=utf-8;"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href=url; a.download=(state.ref||"estimation-simplifiee")+".csv"; a.click();
-  URL.revokeObjectURL(url);
+  // recalcul total global
+  let totalGlobal = 0;
+  document.querySelectorAll('td[id^="total-lot-"]').forEach(r => {
+    totalGlobal += parseFloat(r.textContent) || 0;
+  });
+  document.getElementById('total-global').textContent = totalGlobal.toFixed(2);
 }
 
-bind();
+renderTable();
 </script>
 </body>
 </html>
