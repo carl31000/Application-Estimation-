@@ -31,8 +31,13 @@
     <p style="margin:6px 0 0">Total estimé (HT) : <strong id="total">0 €</strong></p>
     <p id="noteView" style="margin:6px 0 0;color:#475569;display:none"></p>
   </div>
+
+  <button id="exportPDF" style="margin-top:10px;padding:10px 15px;background:#2563eb;color:#fff;border:none;border-radius:6px;cursor:pointer">
+    📄 Exporter en PDF
+  </button>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script>
   const refs = {
     surface: document.getElementById('surface'),
@@ -41,10 +46,10 @@
     quality: document.getElementById('quality'),
     pu: document.getElementById('pu'),
     note: document.getElementById('note'),
-    noteView: document.getElementById('noteView')
+    noteView: document.getElementById('noteView'),
+    exportPDF: document.getElementById('exportPDF')
   };
 
-  // Barème simple
   const PRICES = {
     sol: { bas: 50, moyen: 86, haut: 170 },
     mur: { bas: 40, moyen: 79, haut: 170 }
@@ -62,7 +67,6 @@
     refs.pu.textContent = euro(pu);
     refs.total.textContent = euro(surf * pu);
 
-    // Affichage remarque (sans impact sur le prix)
     const txt = refs.note.value.trim();
     if(txt){
       refs.noteView.style.display = 'block';
@@ -73,10 +77,32 @@
     }
   }
 
+  function exportPDF(){
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF();
+    doc.setFontSize(16);
+    doc.text("Estimation express – Carrelage / Faïence", 10, 20);
+    doc.setFontSize(12);
+
+    const type = [...refs.typeInputs].find(r=>r.checked).nextSibling.textContent.trim();
+    doc.text("Type : " + type, 10, 30);
+    doc.text("Surface : " + refs.surface.value + " m²", 10, 40);
+    doc.text("Qualité : " + refs.quality.options[refs.quality.selectedIndex].text, 10, 50);
+    doc.text("PU estimé : " + refs.pu.textContent, 10, 60);
+    doc.text("Total estimé (HT) : " + refs.total.textContent, 10, 70);
+
+    if(refs.note.value.trim()){
+      doc.text("Remarque : " + refs.note.value.trim(), 10, 80);
+    }
+
+    doc.save("estimation.pdf");
+  }
+
   refs.surface.addEventListener('input', calc);
   refs.quality.addEventListener('change', calc);
   refs.note.addEventListener('input', calc);
   refs.typeInputs.forEach(r => r.addEventListener('change', calc));
+  refs.exportPDF.addEventListener('click', exportPDF);
 
   calc();
 </script>
