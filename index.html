@@ -1,344 +1,280 @@
-import React, { useMemo, useState, useEffect } from "react";
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Estimation rapide – Lots travaux</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="color-scheme" content="dark light"/>
+  <style>
+    :root { color-scheme: dark; }
+    body { background: #0b0d10; color: #e9eef7; }
+    .bg-neutral-850 { background: #171a1f; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
 
-// === Données de base (inspirées du devis fourni) ===
-// Groupées par lot pour faciliter l'usage terrain
-const BASE_ITEMS = [
-  {
-    lot: "Démolition",
-    items: [
-      { label: "Dépose cuisine et sanitaires", unite: "u", pu: 480 },
-      { label: "Dépose chauffage (radiateurs, chaudière)", unite: "u", pu: 420 },
-      { label: "Dépose carrelage", unite: "m²", pu: 32 },
-      { label: "Dépose cloison briquette", unite: "m²", pu: 50 },
-      { label: "Dépose porte et cadre", unite: "u", pu: 60 },
-    ],
-  },
-  {
-    lot: "Plâtrerie / Isolation",
-    items: [
-      { label: "Plafond suspendu BA13", unite: "m²", pu: 32 },
-      { label: "Doublage périphérique BA13", unite: "m²", pu: 32 },
-      { label: "Laine de verre périphérique", unite: "m²", pu: 16 },
-      { label: "Doublage mur voisin BA13", unite: "m²", pu: 32 },
-      { label: "Laine de verre mur voisin", unite: "m²", pu: 12 },
-      { label: "Doublage demi-still", unite: "m²", pu: 32 },
-      { label: "Cloison 72/48 BA13", unite: "m²", pu: 34 },
-      { label: "Isolation cloison laine 45mm", unite: "m²", pu: 7.15 },
-      { label: "Joint plaque plâtre", unite: "m²", pu: 9.5 },
-      { label: "Forfait bandes armées", unite: "u", pu: 500 },
-    ],
-  },
-  {
-    lot: "Menuiserie",
-    items: [
-      { label: "Porte âme pleine", unite: "u", pu: 180 },
-      { label: "Bloc porte galandage", unite: "u", pu: 980 },
-    ],
-  },
-  {
-    lot: "Peinture",
-    items: [
-      { label: "Préparation supports existants", unite: "m²", pu: 5 },
-      { label: "Ratissage complet murs", unite: "m²", pu: 10 },
-      { label: "Couche impression", unite: "m²", pu: 5 },
-      { label: "Peinture finition velours", unite: "m²", pu: 19 },
-      { label: "Peinture boiseries (par face)", unite: "u", pu: 70 },
-      { label: "Peinture plinthes", unite: "ml", pu: 9 },
-      { label: "Forfait joints acrylique", unite: "u", pu: 400 },
-    ],
-  },
-  {
-    lot: "Sols (parquet)",
-    items: [
-      { label: "Ponçage parquet", unite: "m²", pu: 22 },
-      { label: "Application fond dur", unite: "m²", pu: 10 },
-      { label: "Vitrification parquet (2 couches)", unite: "m²", pu: 28 },
-      { label: "Plinthe MDF 10 cm", unite: "ml", pu: 14 },
-    ],
-  },
-  {
-    lot: "Carrelage",
-    items: [
-      { label: "Primaire d'accroche (avant ragréage)", unite: "m²", pu: 10 },
-      { label: "Ragréage fibré 1 cm (max)", unite: "m²", pu: 22 },
-      { label: "Natte de désolidarisation", unite: "m²", pu: 21 },
-      { label: "Fourniture carrelage 75×75", unite: "m²", pu: 30 },
-      { label: "Pose carrelage sol", unite: "m²", pu: 65 },
-      { label: "Joint carrelage", unite: "m²", pu: 25 },
-      { label: "Barre de seuil", unite: "u", pu: 90 },
-    ],
-  },
-  {
-    lot: "Plomberie",
-    items: [
-      { label: "Alimentation eau (PER/multicouche)", unite: "u", pu: 140 },
-      { label: "Alimentation eau chaud/froid", unite: "u", pu: 210 },
-      { label: "Évacuation eau PVC <100mm", unite: "u", pu: 180 },
-      { label: "Évacuation eau PVC ≥100mm", unite: "u", pu: 210 },
-      { label: "Siphon évacuation", unite: "u", pu: 80 },
-      { label: "Modification nourrice", unite: "u", pu: 700 },
-    ],
-  },
-  {
-    lot: "Électricité",
-    items: [
-      { label: "Prise 2P+T", unite: "u", pu: 70 },
-      { label: "Va-et-vient + plafonnier (DCL)", unite: "u", pu: 110 },
-      { label: "Alimentation éclairage simple (DCL)", unite: "u", pu: 90 },
-      { label: "Prise en ligne directe tableau", unite: "u", pu: 110 },
-      { label: "Alimentation VMC", unite: "u", pu: 90 },
-      { label: "Spot / applique supplémentaire", unite: "u", pu: 35 },
-      { label: "Mise en sécurité électrique", unite: "u", pu: 280 },
-      { label: "Frais de saignée + rebouchage", unite: "u", pu: 1400 },
-    ],
-  },
-  {
-    lot: "Climatisation / VMC",
-    items: [
-      { label: "Climatisation gainable complète", unite: "u", pu: 4150 },
-      { label: "VMC hygroréglable complète", unite: "u", pu: 750 },
-    ],
-  },
-];
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
 
-function currency(n: number) {
-  return n.toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
-}
+  <script type="text/babel">
+    const { useMemo, useState, useEffect } = React;
 
-export default function EstimationRapide() {
-  // État des lignes (quantités + PU modifiable)
-  const [lots, setLots] = useState(() => {
-    // Charger depuis localStorage au besoin
-    const saved = typeof window !== "undefined" && localStorage.getItem("estimation_lots");
-    return saved ? JSON.parse(saved) : BASE_ITEMS;
-  });
+    const BASE_ITEMS = [
+      { lot: "Démolition", items: [
+        { label: "Dépose cuisine et sanitaires", unite: "u", pu: 480 },
+        { label: "Dépose chauffage (radiateurs, chaudière)", unite: "u", pu: 420 },
+        { label: "Dépose carrelage", unite: "m²", pu: 32 },
+        { label: "Dépose cloison briquette", unite: "m²", pu: 50 },
+        { label: "Dépose porte et cadre", unite: "u", pu: 60 },
+      ]},
+      { lot: "Plâtrerie / Isolation", items: [
+        { label: "Plafond suspendu BA13", unite: "m²", pu: 32 },
+        { label: "Doublage périphérique BA13", unite: "m²", pu: 32 },
+        { label: "Laine de verre périphérique", unite: "m²", pu: 16 },
+        { label: "Doublage mur voisin BA13", unite: "m²", pu: 32 },
+        { label: "Laine de verre mur voisin", unite: "m²", pu: 12 },
+        { label: "Doublage demi-still", unite: "m²", pu: 32 },
+        { label: "Cloison 72/48 BA13", unite: "m²", pu: 34 },
+        { label: "Isolation cloison laine 45mm", unite: "m²", pu: 7.15 },
+        { label: "Joint plaque plâtre", unite: "m²", pu: 9.5 },
+        { label: "Forfait bandes armées", unite: "u", pu: 500 },
+      ]},
+      { lot: "Menuiserie", items: [
+        { label: "Porte âme pleine", unite: "u", pu: 180 },
+        { label: "Bloc porte galandage", unite: "u", pu: 980 },
+      ]},
+      { lot: "Peinture", items: [
+        { label: "Préparation supports existants", unite: "m²", pu: 5 },
+        { label: "Ratissage complet murs", unite: "m²", pu: 10 },
+        { label: "Couche impression", unite: "m²", pu: 5 },
+        { label: "Peinture finition velours", unite: "m²", pu: 19 },
+        { label: "Peinture boiseries (par face)", unite: "u", pu: 70 },
+        { label: "Peinture plinthes", unite: "ml", pu: 9 },
+        { label: "Forfait joints acrylique", unite: "u", pu: 400 },
+      ]},
+      { lot: "Sols (parquet)", items: [
+        { label: "Ponçage parquet", unite: "m²", pu: 22 },
+        { label: "Application fond dur", unite: "m²", pu: 10 },
+        { label: "Vitrification parquet (2 couches)", unite: "m²", pu: 28 },
+        { label: "Plinthe MDF 10 cm", unite: "ml", pu: 14 },
+        { label: "+ Value parquet contrecollé (fourniture + pose)", unite: "m²", pu: 30 },
+      ]},
+      { lot: "Carrelage", items: [
+        { label: "Primaire d'accroche (avant ragréage)", unite: "m²", pu: 10 },
+        { label: "Ragréage fibré 1 cm (max)", unite: "m²", pu: 22 },
+        { label: "Natte de désolidarisation", unite: "m²", pu: 21 },
+        { label: "Fourniture carrelage 75×75", unite: "m²", pu: 30 },
+        { label: "Pose carrelage sol", unite: "m²", pu: 65 },
+        { label: "Joint carrelage", unite: "m²", pu: 25 },
+        { label: "Barre de seuil", unite: "u", pu: 90 },
+      ]},
+      { lot: "Plomberie", items: [
+        { label: "Alimentation eau (PER/multicouche)", unite: "u", pu: 140 },
+        { label: "Alimentation eau chaud/froid", unite: "u", pu: 210 },
+        { label: "Évacuation eau PVC <100mm", unite: "u", pu: 180 },
+        { label: "Évacuation eau PVC ≥100mm", unite: "u", pu: 210 },
+        { label: "Siphon évacuation", unite: "u", pu: 80 },
+        { label: "Modification nourrice", unite: "u", pu: 700 },
+      ]},
+      { lot: "Électricité", items: [
+        { label: "Prise 2P+T", unite: "u", pu: 70 },
+        { label: "Va-et-vient + plafonnier (DCL)", unite: "u", pu: 110 },
+        { label: "Alimentation éclairage simple (DCL)", unite: "u", pu: 90 },
+        { label: "Prise en ligne directe tableau", unite: "u", pu: 110 },
+        { label: "Alimentation VMC", unite: "u", pu: 90 },
+        { label: "Spot / applique supplémentaire", unite: "u", pu: 35 },
+        { label: "Mise en sécurité électrique", unite: "u", pu: 280 },
+        { label: "Frais de saignée + rebouchage", unite: "u", pu: 1400 },
+      ]},
+      { lot: "Climatisation / VMC", items: [
+        { label: "Climatisation gainable complète", unite: "u", pu: 4150 },
+        { label: "VMC hygroréglable complète", unite: "u", pu: 750 },
+      ]},
+    ];
 
-  const [filter, setFilter] = useState<string>("Tous");
-  const [coef, setCoef] = useState<number>(1); // coefficient d’ajustement global (marge/complexité)
-  const [tva, setTva] = useState<number>(0.1); // 10% par défaut
-  const [projet, setProjet] = useState({ client: "", chantier: "", reference: "" });
+    function currency(n) {
+      return (n || 0).toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
+    }
 
-  useEffect(() => {
-    localStorage.setItem("estimation_lots", JSON.stringify(lots));
-  }, [lots]);
-
-  const handleQtyChange = (lotIdx: number, itemIdx: number, qty: number) => {
-    setLots(prev => {
-      const copy = structuredClone(prev);
-      // @ts-ignore
-      copy[lotIdx].items[itemIdx].qty = qty;
-      return copy;
-    });
-  };
-
-  const handlePuChange = (lotIdx: number, itemIdx: number, pu: number) => {
-    setLots(prev => {
-      const copy = structuredClone(prev);
-      // @ts-ignore
-      copy[lotIdx].items[itemIdx].pu = pu;
-      return copy;
-    });
-  };
-
-  const visibleLots = useMemo(() => {
-    if (filter === "Tous") return lots;
-    return lots.filter(l => l.lot === filter);
-  }, [filter, lots]);
-
-  const totals = useMemo(() => {
-    let ht = 0;
-    lots.forEach(l => {
-      l.items.forEach((it: any) => {
-        const qty = Number(it.qty || 0);
-        const line = qty * Number(it.pu || 0) * Number(coef || 1);
-        ht += line;
+    function App() {
+      const [lots, setLots] = useState(() => {
+        const saved = typeof window !== "undefined" && localStorage.getItem("estimation_lots");
+        return saved ? JSON.parse(saved) : BASE_ITEMS;
       });
-    });
-    const tvaAmt = ht * Number(tva || 0);
-    const ttc = ht + tvaAmt;
-    return { ht, tvaAmt, ttc };
-  }, [lots, coef, tva]);
+      const [filter, setFilter] = useState("Tous");
+      const [coef, setCoef] = useState(1);
+      const [tva, setTva] = useState(0.10);
+      const [projet, setProjet] = useState({ client: "", chantier: "", reference: "" });
 
-  const resetForm = () => {
-    setLots(BASE_ITEMS.map(l => ({
-      lot: l.lot,
-      items: l.items.map(it => ({ ...it, qty: undefined })),
-    })));
-  };
+      useEffect(() => {
+        localStorage.setItem("estimation_lots", JSON.stringify(lots));
+      }, [lots]);
 
-  const exportCSV = () => {
-    const rows: string[] = [];
-    rows.push(["Lot", "Prestation", "Unité", "PU HT", "Coefficient", "Quantité", "Total HT"].join(";"));
-    lots.forEach(l => {
-      l.items.forEach((it: any) => {
-        const qty = Number(it.qty || 0);
-        const total = qty * Number(it.pu || 0) * Number(coef || 1);
-        if (qty > 0) {
-          rows.push([l.lot, it.label, it.unite, String(it.pu), String(coef), String(qty), String(total)].join(";"));
-        }
-      });
-    });
-    rows.push(["", "", "", "", "TOTAL HT", "", String(totals.ht)].join(";"));
-    rows.push(["", "", "", "", "TVA", "", String(tototals.tvaAmt)].join(";"));
-    rows.push(["", "", "", "", "TOTAL TTC", "", String(totals.ttc)].join(";"));
-    const blob = new Blob(["\uFEFF" + rows.join("\n")], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    const ref = projet.reference || "estimation";
-    a.href = url;
-    a.download = `${ref}-export.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
-  };
+      const handleQtyChange = (lotIdx, itemIdx, qty) => {
+        setLots(prev => {
+          const copy = JSON.parse(JSON.stringify(prev));
+          copy[lotIdx].items[itemIdx].qty = qty;
+          return copy;
+        });
+      };
 
-  return (
-    <div className="min-h-screen bg-neutral-900 text-neutral-100">
-      <header className="sticky top-0 z-10 backdrop-blur bg-neutral-900/80 border-b border-neutral-800">
-        <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
-          <div className="flex-1">
-            <h1 className="text-xl font-semibold">Estimation rapide – Lots travaux</h1>
-            <p className="text-sm text-neutral-400">Saisie mobile-friendly, totaux automatiques, export CSV.</p>
-          </div>
-          <button onClick={resetForm} className="px-3 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-sm">Réinitialiser</button>
-          <button onClick={exportCSV} className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-sm">Exporter CSV</button>
-        </div>
-      </header>
+      const handlePuChange = (lotIdx, itemIdx, pu) => {
+        setLots(prev => {
+          const copy = JSON.parse(JSON.stringify(prev));
+          copy[lotIdx].items[itemIdx].pu = pu;
+          return copy;
+        });
+      };
 
-      <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
-        {/* Infos projet */}
-        <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          <input
-            className="bg-neutral-800 border border-neutral-700 rounded-xl px-3 py-2 w-full"
-            placeholder="Client"
-            value={projet.client}
-            onChange={e => setProjet({ ...projet, client: e.target.value })}
-          />
-          <input
-            className="bg-neutral-800 border border-neutral-700 rounded-xl px-3 py-2 w-full"
-            placeholder="Chantier"
-            value={projet.chantier}
-            onChange={e => setProjet({ ...projet, chantier: e.target.value })}
-          />
-          <input
-            className="bg-neutral-800 border border-neutral-700 rounded-xl px-3 py-2 w-full"
-            placeholder="Référence / N° Estimation"
-            value={projet.reference}
-            onChange={e => setProjet({ ...projet, reference: e.target.value })}
-          />
-        </section>
+      const visibleLots = useMemo(() => {
+        if (filter === "Tous") return lots;
+        return lots.filter(l => l.lot === filter);
+      }, [filter, lots]);
 
-        {/* Filtres rapides */}
-        <section className="flex flex-wrap items-center gap-2">
-          <select
-            className="bg-neutral-800 border border-neutral-700 rounded-xl px-3 py-2 text-sm"
-            value={filter}
-            onChange={e => setFilter(e.target.value)}
-          >
-            <option>Tous</option>
-            {lots.map(l => (
-              <option key={l.lot}>{l.lot}</option>
+      const totals = useMemo(() => {
+        let ht = 0;
+        lots.forEach(l => {
+          l.items.forEach(it => {
+            const qty = Number(it.qty || 0);
+            const line = qty * Number(it.pu || 0) * Number(coef || 1);
+            ht += line;
+          });
+        });
+        const tvaAmt = ht * Number(tva || 0);
+        const ttc = ht + tvaAmt;
+        return { ht, tvaAmt, ttc };
+      }, [lots, coef, tva]);
+
+      const resetForm = () => {
+        setLots(BASE_ITEMS.map(l => ({
+          lot: l.lot,
+          items: l.items.map(it => ({ ...it, qty: undefined })),
+        })));
+      };
+
+      const exportCSV = () => {
+        const rows = [];
+        rows.push(["Lot", "Prestation", "Unité", "PU HT", "Coefficient", "Quantité", "Total HT"].join(";"));
+        lots.forEach(l => {
+          l.items.forEach(it => {
+            const qty = Number(it.qty || 0);
+            const total = qty * Number(it.pu || 0) * Number(coef || 1);
+            if (qty > 0) {
+              rows.push([l.lot, it.label, it.unite, String(it.pu), String(coef), String(qty), String(total)].join(";"));
+            }
+          });
+        });
+        rows.push(["", "", "", "", "TOTAL HT", "", String(totals.ht)].join(";"));
+        rows.push(["", "", "", "", "TVA", "", String(totals.tvaAmt)].join(";"));
+        rows.push(["", "", "", "", "TOTAL TTC", "", String(totals.ttc)].join(";"));
+        const blob = new Blob(["\ufeff" + rows.join("\n")], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        const ref = projet.reference || "estimation";
+        a.href = url;
+        a.download = ref + "-export.csv";
+        a.click();
+        URL.revokeObjectURL(url);
+      };
+
+      return (
+        <div className="min-h-screen bg-neutral-900 text-neutral-100">
+          <header className="sticky top-0 z-10 backdrop-blur bg-neutral-900/80 border-b border-neutral-800">
+            <div className="max-w-5xl mx-auto px-4 py-3 flex items-center gap-3">
+              <div className="flex-1">
+                <h1 className="text-xl font-semibold">Estimation rapide – Lots travaux</h1>
+                <p className="text-sm text-neutral-400">Saisie mobile-friendly, totaux automatiques, export CSV.</p>
+              </div>
+              <button onClick={resetForm} className="px-3 py-2 rounded-xl bg-neutral-800 hover:bg-neutral-700 text-sm">Réinitialiser</button>
+              <button onClick={exportCSV} className="px-3 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-sm">Exporter CSV</button>
+            </div>
+          </header>
+
+          <main className="max-w-5xl mx-auto px-4 py-6 space-y-6">
+            <section className="grid grid-cols-1 md:grid-cols-3 gap-3">
+              <input className="bg-neutral-800 border border-neutral-700 rounded-xl px-3 py-2 w-full" placeholder="Client"
+                value={projet.client} onChange={e => setProjet({ ...projet, client: e.target.value })} />
+              <input className="bg-neutral-800 border border-neutral-700 rounded-xl px-3 py-2 w-full" placeholder="Chantier"
+                value={projet.chantier} onChange={e => setProjet({ ...projet, chantier: e.target.value })} />
+              <input className="bg-neutral-800 border border-neutral-700 rounded-xl px-3 py-2 w-full" placeholder="Référence / N° Estimation"
+                value={projet.reference} onChange={e => setProjet({ ...projet, reference: e.target.value })} />
+            </section>
+
+            <section className="flex flex-wrap items-center gap-2">
+              <select className="bg-neutral-800 border border-neutral-700 rounded-xl px-3 py-2 text-sm" value={filter} onChange={e => setFilter(e.target.value)}>
+                <option>Tous</option>
+                {lots.map(l => (<option key={l.lot}>{l.lot}</option>))}
+              </select>
+
+              <label className="text-sm text-neutral-300">Coeff. global</label>
+              <input type="number" step="0.01" min={0} className="bg-neutral-800 border border-neutral-700 rounded-xl px-3 py-2 w-28"
+                value={coef} onChange={e => setCoef(Number(e.target.value) || 0)} />
+
+              <label className="text-sm text-neutral-300">TVA</label>
+              <select className="bg-neutral-800 border border-neutral-700 rounded-xl px-3 py-2 w-28"
+                value={String(tva)} onChange={e => setTva(Number(e.target.value))}>
+                <option value="0.055">5,5%</option>
+                <option value="0.1">10%</option>
+                <option value="0.2">20%</option>
+              </select>
+            </section>
+
+            { (filter === "Tous" ? lots : lots.filter(l => l.lot === filter)).map((lot, lotIdx) => (
+              <section key={lot.lot} className="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden">
+                <div className="px-4 py-3 bg-neutral-850 border-b border-neutral-800 flex items-center justify-between">
+                  <h2 className="font-medium">{lot.lot}</h2>
+                </div>
+                <div className="divide-y divide-neutral-800">
+                  {lot.items.map((it, itemIdx) => {
+                    const qty = Number(it.qty || 0);
+                    const total = qty * Number(it.pu || 0) * Number(coef || 1);
+                    return (
+                      <div key={it.label} className="p-4 grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
+                        <div className="sm:col-span-5">
+                          <div className="text-sm font-medium">{it.label}</div>
+                          <div className="text-xs text-neutral-400">Unité: {it.unite}</div>
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="text-xs text-neutral-400">PU HT</label>
+                          <input type="number" className="mt-1 w-full bg-neutral-800 border border-neutral-700 rounded-xl px-3 py-2"
+                            value={it.pu} onChange={e => handlePuChange(lotIdx, itemIdx, Number(e.target.value) || 0)} />
+                        </div>
+                        <div className="sm:col-span-2">
+                          <label className="text-xs text-neutral-400">Quantité</label>
+                          <input type="number" min={0} step="0.01" className="mt-1 w-full bg-neutral-800 border border-neutral-700 rounded-xl px-3 py-2"
+                            value={it.qty ?? ""} placeholder="0"
+                            onChange={e => handleQtyChange(lotIdx, itemIdx, Number(e.target.value) || 0)} />
+                        </div>
+                        <div className="sm:col-span-3 text-right">
+                          <div className="text-xs text-neutral-400">Total ligne HT</div>
+                          <div className="text-base font-semibold">{currency(total || 0)}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
             ))}
-          </select>
 
-          <label className="text-sm text-neutral-300">Coeff. global</label>
-          <input
-            type="number"
-            step="0.01"
-            min={0}
-            className="bg-neutral-800 border border-neutral-700 rounded-xl px-3 py-2 w-28"
-            value={coef}
-            onChange={e => setCoef(Number(e.target.value) || 0)}
-          />
+            <section className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div>
+                <div className="text-sm text-neutral-400">Total HT</div>
+                <div className="text-2xl font-semibold">{currency((lots||[]).reduce((s,l)=>s+l.items.reduce((ss,it)=>ss+(Number(it.qty||0)*Number(it.pu||0)*Number(coef||1)),0),0))}</div>
+              </div>
+              <div>
+                <div className="text-sm text-neutral-400">TVA</div>
+                <div className="text-2xl font-semibold">{currency(((lots||[]).reduce((s,l)=>s+l.items.reduce((ss,it)=>ss+(Number(it.qty||0)*Number(it.pu||0)*Number(coef||1)),0),0))*Number(tva||0))}</div>
+              </div>
+              <div>
+                <div className="text-sm text-neutral-400">Total TTC</div>
+                <div className="text-2xl font-semibold">{currency(((lots||[]).reduce((s,l)=>s+l.items.reduce((ss,it)=>ss+(Number(it.qty||0)*Number(it.pu||0)*Number(coef||1)),0),0))*(1+Number(tva||0)))}</div>
+              </div>
+            </section>
 
-          <label className="text-sm text-neutral-300">TVA</label>
-          <select
-            className="bg-neutral-800 border border-neutral-700 rounded-xl px-3 py-2 w-28"
-            value={String(tva)}
-            onChange={e => setTva(Number(e.target.value))}
-          >
-            <option value="0.055">5,5%</option>
-            <option value="0.1">10%</option>
-            <option value="0.2">20%</option>
-          </select>
-        </section>
-
-        {/* Lignes par lot */}
-        {visibleLots.map((lot, lotIdx) => (
-          <section key={lot.lot} className="bg-neutral-900 border border-neutral-800 rounded-2xl overflow-hidden">
-            <div className="px-4 py-3 bg-neutral-850 border-b border-neutral-800 flex items-center justify-between">
-              <h2 className="font-medium">{lot.lot}</h2>
-            </div>
-            <div className="divide-y divide-neutral-800">
-              {lot.items.map((it: any, itemIdx: number) => {
-                const qty = Number(it.qty || 0);
-                const total = qty * Number(it.pu || 0) * Number(coef || 1);
-                return (
-                  <div key={it.label} className="p-4 grid grid-cols-1 sm:grid-cols-12 gap-3 items-end">
-                    <div className="sm:col-span-5">
-                      <div className="text-sm font-medium">{it.label}</div>
-                      <div className="text-xs text-neutral-400">Unité: {it.unite}</div>
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="text-xs text-neutral-400">PU HT</label>
-                      <input
-                        type="number"
-                        className="mt-1 w-full bg-neutral-800 border border-neutral-700 rounded-xl px-3 py-2"
-                        value={it.pu}
-                        onChange={e => handlePuChange(lotIdx, itemIdx, Number(e.target.value) || 0)}
-                      />
-                    </div>
-                    <div className="sm:col-span-2">
-                      <label className="text-xs text-neutral-400">Quantité</label>
-                      <input
-                        type="number"
-                        min={0}
-                        step="0.01"
-                        className="mt-1 w-full bg-neutral-800 border border-neutral-700 rounded-xl px-3 py-2"
-                        value={it.qty ?? ""}
-                        placeholder="0"
-                        onChange={e => handleQtyChange(lotIdx, itemIdx, Number(e.target.value) || 0)}
-                      />
-                    </div>
-                    <div className="sm:col-span-3 text-right">
-                      <div className="text-xs text-neutral-400">Total ligne HT</div>
-                      <div className="text-base font-semibold">{currency(total || 0)}</div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </section>
-        ))}
-
-        {/* Totaux */}
-        <section className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4 grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <div className="text-sm text-neutral-400">Total HT</div>
-            <div className="text-2xl font-semibold">{currency(totals.ht)}</div>
-          </div>
-          <div>
-            <div className="text-sm text-neutral-400">TVA</div>
-            <div className="text-2xl font-semibold">{currency(tals.tvaAmt || 0)}</div>
-          </div>
-          <div>
-            <div className="text-sm text-neutral-400">Total TTC</div>
-            <div className="text-2xl font-semibold">{currency(totals.ttc)}</div>
-          </div>
-        </section>
-
-        {/* Aides terrain (rappels simples) */}
-        <section className="text-sm text-neutral-400">
-          <details className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4">
-            <summary className="cursor-pointer">Rappels terrain (exemples)</summary>
-            <ul className="list-disc pl-5 mt-2 space-y-1">
-              <li>Carrelage sol: penser au primaire et au ragréage si support irrégulier.</li>
-              <li>Électricité: repérer les circuits spécialisés (LV, four, plaque) – lignes directes tableau.</li>
-              <li>Plomberie: vérifier évacuation PVC ≥100mm pour WC sur colonne principale.</li>
-              <li>Peinture: impression avant finition; boiseries à compter par face.</li>
-            </ul>
-          </details>
-        </section>
-      </main>
-    </div>
-  );
-}
+            <section className="text-sm text-neutral-400">
+              <details className="bg-neutral-900 border border-neutral-800 rounded-2xl p-4">
+                <summary className="cursor-pointer">Rappels terrain (exemples)</summary>
+                <ul className="list-disc pl-5 mt
