@@ -1,134 +1,50 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<title>Estimation Chantier</title>
-<style>
-  body { font-family: Arial, sans-serif; margin: 20px; }
-  table { border-collapse: collapse; width: 100%; margin-bottom: 40px; }
-  th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-  th { background-color: #f0f0f0; }
-  input { width: 100%; box-sizing: border-box; }
-  .lot-title { background: #ddd; font-weight: bold; }
-  .total-lot { font-weight: bold; background: #f9f9f9; }
-  .total-global { font-size: 1.2em; font-weight: bold; background: #cde; }
-</style>
-</head>
-<body>
-
-<h1>Estimation chantier</h1>
-
-<div id="app"></div>
+<div id="app">
+  <h2> Estimation express – Carrelage / Faïence</h2>
+  <div>
+    <label><input type="radio" name="type" value="sol" checked> Carrelage sol</label>
+    <label><input type="radio" name="type" value="mur"> Faïence murale</label>
+  </div>
+  <div>
+    <label>Surface (m²) : <input type="number" id="surface" value="0" min="0" step="0.1"></label>
+  </div>
+  <div>
+    <label>Qualité :</label>
+    <select id="quality">
+      <option value="bas">Entrée de gamme</option>
+      <option value="moyen" selected>Moyenne gamme</option>
+      <option value="haut">Haut de gamme</option>
+    </select>
+  </div>
+  <div id="output">
+    <p>Total estimé (HT) : <strong id="total">0 €</strong></p>
+  </div>
+</div>
 
 <script>
-const lots = {
-  "Démolition": [
-    {desc: "Dépose cuisine existante", pu: 400},
-    {desc: "Dépose éléments sanitaires (SDB)", pu: 400},
-    {desc: "Dépose revêtement sol (parquet, lino, carrelage)", pu: 15},
-    {desc: "Dépose cloison", pu: 50},
-    {desc: "Évacuation gravats", pu: 280}
-  ],
-  "Sols": [
-    {desc: "Ragréage complet (préparation + primaire)", pu: 22},
-    {desc: "Pose carrelage sol (préparation + pose + croisillons)", pu: 65},
-    {desc: "Pose parquet stratifié (préparation + pose + plinthes)", pu: 45},
-    {desc: "Pose parquet contrecollé", pu: 55},
-    {desc: "Pose parquet massif", pu: 75}
-  ],
-  "Murs": [
-    {desc: "Pose faïence murale (préparation + pose + croisillons)", pu: 65},
-    {desc: "Pose joints faïence (préparation + pose + accessoires)", pu: 25},
-    {desc: "Peinture finition murs/plafonds", pu: 28},
-    {desc: "Pose papier peint / revêtement mural", pu: 32}
-  ],
-  "Plomberie": [
-    {desc: "Pose WC complet", pu: 450},
-    {desc: "Pose meuble vasque", pu: 550},
-    {desc: "Pose douche complète", pu: 1800},
-    {desc: "Pose baignoire", pu: 1200}
-  ],
-  "Électricité": [
-    {desc: "Pose prise électrique", pu: 80},
-    {desc: "Pose spot / point lumineux", pu: 90},
-    {desc: "Pose tableau électrique complet", pu: 1800}
-  ],
-  "Menuiseries": [
-    {desc: "Pose porte intérieure", pu: 250},
-    {desc: "Pose fenêtre PVC double vitrage", pu: 750},
-    {desc: "Pose baie vitrée", pu: 1200}
-  ],
-  "Chauffage": [
-    {desc: "Pose chaudière gaz (fourniture + préparation nourrice)", pu: 3500},
-    {desc: "Pose chauffe-eau électrique (fourniture + préparation nourrice)", pu: 850},
-    {desc: "Pose chauffe-eau thermodynamique", pu: 2200},
-    {desc: "Pose radiateur électrique", pu: 350},
-    {desc: "Pose radiateur eau chaude", pu: 420},
-    {desc: "Pose sèche-serviettes", pu: 300},
-    {desc: "Pose plancher chauffant hydraulique", pu: 90},
-    {desc: "Pose plancher chauffant électrique", pu: 75},
-    {desc: "Pose PAC air/eau", pu: 8500},
-    {desc: "Pose PAC air/air", pu: 6500}
-  ]
-};
+  const refs = {
+    surface: document.getElementById('surface'),
+    total: document.getElementById('total'),
+    typeInputs: document.getElementsByName('type'),
+    quality: document.getElementById('quality')
+  };
 
-function renderTable(){
-  let html = "";
-  let totalGlobal = 0;
+  const PRICES = {
+    sol: { bas: 50, moyen: 86, haut: 170 },
+    mur: { bas: 40, moyen: 79, haut: 170 }
+  };
 
-  for(const [lot, items] of Object.entries(lots)){
-    html += `<table><tr><th colspan="5" class="lot-title">${lot}</th></tr>`;
-    html += `<tr><th>Description produit</th><th>Prix unitaire (€)</th><th>Quantité</th><th>Remarque</th><th>Total (€)</th></tr>`;
-    let totalLot = 0;
-
-    items.forEach((item, idx) => {
-      html += `<tr>
-        <td>${item.desc}</td>
-        <td><input type="number" value="${item.pu}" min="0" step="0.01" 
-            oninput="updateTotal(this, '${lot}', ${idx})"></td>
-        <td><input type="number" value="0" min="0" step="0.1" 
-            oninput="updateTotal(this, '${lot}', ${idx})"></td>
-        <td><input type="text" placeholder="Remarque" 
-            oninput="updateTotal(this, '${lot}', ${idx})"></td>
-        <td id="total-${lot}-${idx}">0</td>
-      </tr>`;
-    });
-
-    html += `<tr><td colspan="4" class="total-lot">Total ${lot}</td><td id="total-lot-${lot}">0</td></tr></table>`;
+  function calc(){
+    const surf = parseFloat(refs.surface.value) || 0;
+    const type = [...refs.typeInputs].find(r=>r.checked).value;
+    const qual = refs.quality.value;
+    const pu = PRICES[type][qual];
+    refs.total.textContent = (surf * pu).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
   }
 
-  html += `<table><tr><td colspan="4" class="total-global">TOTAL GLOBAL</td><td class="total-global" id="total-global">0</td></tr></table>`;
+  refs.surface.addEventListener('input', calc);
+  refs.quality.addEventListener('change', calc);
+  refs.typeInputs.forEach(r => r.addEventListener('change', calc));
 
-  document.getElementById('app').innerHTML = html;
-}
-
-function updateTotal(el, lot, idx){
-  const row = el.parentNode.parentNode;
-  const pu = parseFloat(row.children[1].children[0].value) || 0;
-  const qty = parseFloat(row.children[2].children[0].value) || 0;
-  const total = pu * qty;
-  document.getElementById(`total-${lot}-${idx}`).textContent = total.toFixed(2);
-
-  // recalcul total lot
-  let totalLot = 0;
-  const table = row.closest('table');
-  const rows = table.querySelectorAll('td[id^="total-"]');
-  rows.forEach(r => {
-    if(r.id.startsWith(`total-${lot}-`) && !r.id.includes("lot")){
-      totalLot += parseFloat(r.textContent) || 0;
-    }
-  });
-  document.getElementById(`total-lot-${lot}`).textContent = totalLot.toFixed(2);
-
-  // recalcul total global
-  let totalGlobal = 0;
-  document.querySelectorAll('td[id^="total-lot-"]').forEach(r => {
-    totalGlobal += parseFloat(r.textContent) || 0;
-  });
-  document.getElementById('total-global').textContent = totalGlobal.toFixed(2);
-}
-
-renderTable();
+  calc();
 </script>
-</body>
-</html>
+
