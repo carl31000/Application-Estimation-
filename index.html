@@ -1,496 +1,82 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-<meta charset="UTF-8">
-<title>Estimation Express – Multi-lots</title>
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<style>
-  :root{--b:#f6f8fb;--g:#d9e0e8;--t:#0f172a;--a:#2459ff}
-  *{box-sizing:border-box}
-  body{margin:16px;font:15px/1.5 system-ui,-apple-system,Segoe UI,Roboto;color:var(--t);background:#fff}
-  h1{font-size:20px;margin:0 0 8px}
-  h2{font-size:17px;margin:0 0 8px}
-  .toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0 12px}
-  .toolbar input{padding:8px 10px;border:1px solid var(--g);border-radius:10px}
-  .btn{padding:8px 12px;border:1px solid var(--g);border-radius:10px;background:#fff;cursor:pointer}
-  .btn:hover{background:#eef3ff}
-  .card{border:1px solid var(--g);border-radius:12px;padding:12px;margin:12px 0;background:#fff}
-  .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .row{display:flex;gap:8px;flex-wrap:wrap}
-  label{display:block;font-weight:600;margin-bottom:4px}
-  select,input[type="number"],input[type="text"],textarea{width:100%;padding:8px;border:1px solid var(--g);border-radius:10px}
-  table{border-collapse:collapse;width:100%;margin-top:10px;border:1px solid var(--g)}
-  th,td{border:1px solid var(--g);padding:8px;text-align:left;vertical-align:top}
-  th{background:#f1f4f9}
-  .lot-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
-  .lot-title{font-weight:800}
-  .right{text-align:right}
-  .muted{color:#475569}
-  .lot-footer{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-top:8px}
-  .lot-total{margin-left:auto;font-weight:800}
-  .grand{font-size:18px;font-weight:900}
-  .actions{display:flex;gap:8px;flex-wrap:wrap}
-  .pill{padding:4px 8px;border-radius:999px;background:#eef3ff;border:1px solid var(--g);font-size:12px}
-  .danger{color:#b00020}
-  .linklike{color:var(--a);cursor:pointer;text-decoration:underline}
-  @media print{
-    .no-print{display:none !important}
-    body{margin:0;padding:12mm}
-    .card{break-inside:avoid}
-  }
-</style>
-</head>
-<body>
+<div id="app" style="max-width:520px;font-family:system-ui,-apple-system,Segoe UI,Roboto;margin:16px">
+  <h2 style="margin:0 0 10px">Estimation express – Carrelage / Faïence</h2>
 
-<h1>Estimation express – Multilots</h1>
-<div class="toolbar no-print">
-  <input id="client" placeholder="Client">
-  <input id="chantier" placeholder="Chantier / Adresse">
-  <input id="ref" placeholder="Réf.">
-  <div class="actions">
-    <button class="btn" id="printPdf">Imprimer / PDF</button>
-    <button class="btn" id="exportCsv">Exporter CSV (Excel)</button>
-    <button class="btn" id="reset">Réinitialiser</button>
+  <div style="margin:6px 0">
+    <label><input type="radio" name="type" value="sol" checked> Carrelage sol</label>
+    <label style="margin-left:12px"><input type="radio" name="type" value="mur"> Faïence murale</label>
   </div>
-</div>
 
-<!-- CALCULATEUR EXPRESS (style que tu préfères) -->
-<div class="card no-print">
-  <h2>Calculateur express</h2>
-  <div class="grid">
-    <div>
-      <label>Lot</label>
-      <select id="lotSelect">
-        <option>Démolition</option>
-        <option>Sols</option>
-        <option>Murs/Faïence</option>
-        <option>Plomberie</option>
-        <option>Électricité</option>
-        <option>Menuiseries</option>
-        <option>Chauffage</option>
-      </select>
-    </div>
-    <div>
-      <label>Poste</label>
-      <select id="poste">
-        <optgroup label="Carrelage / Faïence">
-          <option value="carrelage_sol">Carrelage sol</option>
-          <option value="faience_mur">Faïence murale</option>
-          <option value="ragreage">Ragréage (primaire + application)</option>
-        </optgroup>
-        <optgroup label="Peinture">
-          <option value="peinture_murs_plafonds">Peinture murs/plafonds</option>
-        </optgroup>
-        <optgroup label="Sols (parquet)">
-          <option value="parquet_stratifie">Parquet stratifié</option>
-          <option value="parquet_contrecolle">Parquet contrecollé</option>
-          <option value="parquet_massif">Parquet massif</option>
-        </optgroup>
-        <optgroup label="Démolition">
-          <option value="depose_carrelage">Dépose carrelage sol</option>
-          <option value="depose_cloison">Dépose cloison</option>
-          <option value="evacuation_gravats">Évacuation gravats (m³)</option>
-        </optgroup>
-        <optgroup label="Plomberie / SDB">
-          <option value="pose_wc">Pose WC complet</option>
-          <option value="pose_meuble_vasque">Pose meuble vasque</option>
-          <option value="pose_douche_complete">Pose douche complète</option>
-          <option value="pose_baignoire">Pose baignoire</option>
-        </optgroup>
-        <optgroup label="Électricité">
-          <option value="prise">Pose prise</option>
-          <option value="point_lumineux">Point lumineux / spot</option>
-          <option value="tableau_elec">Tableau électrique complet</option>
-        </optgroup>
-        <optgroup label="Chauffage">
-          <option value="chaudiere_gaz">Pose chaudière gaz</option>
-          <option value="chauffe_eau_elec">Pose chauffe-eau électrique</option>
-          <option value="chauffe_eau_th">Pose chauffe-eau thermodynamique</option>
-          <option value="radiateur_elec">Pose radiateur électrique</option>
-          <option value="radiateur_eau">Pose radiateur eau chaude</option>
-          <option value="seche_serviettes">Pose sèche-serviettes</option>
-          <option value="plancher_chauffant_hydro">Plancher chauffant hydraulique</option>
-          <option value="plancher_chauffant_elec">Plancher chauffant électrique</option>
-          <option value="pac_air_eau">PAC air/eau</option>
-          <option value="pac_air_air">PAC air/air (splits)</option>
-        </optgroup>
-      </select>
-    </div>
-    <div>
-      <label>Quantité <span id="unitLabel">(m²)</span></label>
-      <input type="number" id="qty" value="0" min="0" step="0.1">
-    </div>
-    <div>
-      <label>Qualité</label>
-      <select id="quality">
-        <option value="bas">Entrée de gamme</option>
-        <option value="moyen" selected>Moyenne gamme</option>
-        <option value="haut">Haut de gamme</option>
-      </select>
-    </div>
-    <div>
-      <label>Remarque (ex : 300 L, GF >90 cm, 2000 W)</label>
-      <input type="text" id="note" placeholder="optionnel">
-    </div>
-    <div>
-      <label>PU estimé</label>
-      <div class="pill" id="puView">0 €</div>
-    </div>
+  <div style="margin:6px 0">
+    <label>Surface (m²) :
+      <input type="number" id="surface" value="0" min="0" step="0.1" style="width:100%;padding:8px;margin-top:4px">
+    </label>
   </div>
-  <div class="row" style="margin-top:8px;justify-content:space-between;align-items:center">
-    <div class="muted">Total poste : <b id="totalView">0 €</b></div>
-    <div class="actions">
-      <button class="btn" id="addToLot">Ajouter au lot</button>
-    </div>
+
+  <div style="margin:6px 0">
+    <label>Qualité :</label>
+    <select id="quality" style="width:100%;padding:8px;margin-top:4px">
+      <option value="bas">Entrée de gamme</option>
+      <option value="moyen" selected>Moyenne gamme</option>
+      <option value="haut">Haut de gamme</option>
+    </select>
   </div>
-</div>
 
-<!-- LOTS -->
-<div id="lotsContainer"></div>
+  <div style="margin:6px 0">
+    <label>Remarque (optionnel) :</label>
+    <input type="text" id="note" placeholder="Ex : grand format, joints époxy, etc." style="width:100%;padding:8px;margin-top:4px">
+  </div>
 
-<!-- RÉCAP -->
-<div class="card">
-  <div class="row" style="justify-content:space-between;align-items:center">
-    <div>
-      <div><b>Client :</b> <span id="hClient"></span></div>
-      <div><b>Chantier :</b> <span id="hChantier"></span></div>
-      <div><b>Réf. :</b> <span id="hRef"></span></div>
-    </div>
-    <div class="grand">Total global HT : <span id="grandTotal">0,00 €</span></div>
+  <div id="output" style="margin-top:12px;padding:10px;border:1px solid #e5e7eb;border-radius:10px;background:#f9fafb">
+    <p style="margin:0">PU estimé : <strong id="pu">0 €</strong></p>
+    <p style="margin:6px 0 0">Total estimé (HT) : <strong id="total">0 €</strong></p>
+    <p id="noteView" style="margin:6px 0 0;color:#475569;display:none"></p>
   </div>
 </div>
 
 <script>
-  const € = n => (Number(n)||0).toLocaleString('fr-FR',{style:'currency',currency:'EUR'});
-  const unitByKey = {
-    carrelage_sol:'m²', faience_mur:'m²', ragreage:'m²',
-    peinture_murs_plafonds:'m²',
-    parquet_stratifie:'m²', parquet_contrecolle:'m²', parquet_massif:'m²',
-    depose_carrelage:'m²', depose_cloison:'m²', evacuation_gravats:'u',
-    pose_wc:'u', pose_meuble_vasque:'u', pose_douche_complete:'u', pose_baignoire:'u',
-    prise:'u', point_lumineux:'u', tableau_elec:'u',
-    chaudiere_gaz:'u', chauffe_eau_elec:'u', chauffe_eau_th:'u',
-    radiateur_elec:'u', radiateur_eau:'u', seche_serviettes:'u',
-    plancher_chauffant_hydro:'m²', plancher_chauffant_elec:'m²',
-    pac_air_eau:'u', pac_air_air:'u'
+  const refs = {
+    surface: document.getElementById('surface'),
+    total: document.getElementById('total'),
+    typeInputs: document.getElementsByName('type'),
+    quality: document.getElementById('quality'),
+    pu: document.getElementById('pu'),
+    note: document.getElementById('note'),
+    noteView: document.getElementById('noteView')
   };
 
+  // Barème simple
   const PRICES = {
-    carrelage_sol:            { bas:50,  moyen:86,  haut:170 },
-    faience_mur:              { bas:40,  moyen:79,  haut:170 },
-    ragreage:                 { bas:18,  moyen:22,  haut:30  },
-
-    peinture_murs_plafonds:   { bas:20,  moyen:28,  haut:38  },
-
-    parquet_stratifie:        { bas:35,  moyen:45,  haut:60  },
-    parquet_contrecolle:      { bas:45,  moyen:55,  haut:75  },
-    parquet_massif:           { bas:60,  moyen:75,  haut:95  },
-
-    depose_carrelage:         { bas:15,  moyen:20,  haut:30  },
-    depose_cloison:           { bas:40,  moyen:50,  haut:70  },
-    evacuation_gravats:       { bas:200, moyen:280, haut:380 },
-
-    pose_wc:                  { bas:380, moyen:450, haut:520 },
-    pose_meuble_vasque:       { bas:480, moyen:550, haut:700 },
-    pose_douche_complete:     { bas:1500,moyen:1800,haut:2500},
-    pose_baignoire:           { bas:950, moyen:1200,haut:1600},
-
-    prise:                    { bas:70,  moyen:80,  haut:100 },
-    point_lumineux:           { bas:80,  moyen:90,  haut:120 },
-    tableau_elec:             { bas:1500,moyen:1800,haut:2300},
-
-    chaudiere_gaz:            { bas:3000,moyen:3500,haut:4500},
-    chauffe_eau_elec:         { bas:750, moyen:850, haut:1000},
-    chauffe_eau_th:           { bas:1900,moyen:2200,haut:2800},
-    radiateur_elec:           { bas:280, moyen:350, haut:450 },
-    radiateur_eau:            { bas:360, moyen:420, haut:520 },
-    seche_serviettes:         { bas:240, moyen:300, haut:420 },
-    plancher_chauffant_hydro: { bas:70,  moyen:90,  haut:120 },
-    plancher_chauffant_elec:  { bas:60,  moyen:75,  haut:100 },
-    pac_air_eau:              { bas:7500,moyen:8500,haut:11000},
-    pac_air_air:              { bas:5200,moyen:6500,haut:8200 }
+    sol: { bas: 50, moyen: 86, haut: 170 },
+    mur: { bas: 40, moyen: 79, haut: 170 }
   };
 
-  const lots = [
-    {name:'Démolition', key:'DEM'},
-    {name:'Sols', key:'SOL'},
-    {name:'Murs/Faïence', key:'MUR'},
-    {name:'Plomberie', key:'PLO'},
-    {name:'Électricité', key:'ELEC'},
-    {name:'Menuiseries', key:'MENU'},
-    {name:'Chauffage', key:'CHAUF'}
-  ];
-
-  const state = { // lignes par lot, ajustements et remarques de lot
-    lines: {DEM:[], SOL:[], MUR:[], PLO:[], ELEC:[], MENU:[], CHAUF:[]},
-    adj:   {DEM:0,   SOL:0,   MUR:0,   PLO:0,   ELEC:0,   MENU:0,   CHAUF:0},
-    note:  {DEM:'',  SOL:'',  MUR:'',  PLO:'',  ELEC:'',  MENU:'',  CHAUF:''}
-  };
-
-  // --- Calculateur express ---
-  const lotSelect = document.getElementById('lotSelect');
-  const poste = document.getElementById('poste');
-  const qty = document.getElementById('qty');
-  const quality = document.getElementById('quality');
-  const note = document.getElementById('note');
-  const unitLabel = document.getElementById('unitLabel');
-  const puView = document.getElementById('puView');
-  const totalView = document.getElementById('totalView');
-
-  function refreshUnit(){ unitLabel.textContent = '('+(unitByKey[poste.value]||'u')+')'; }
-  function recalcExpress(){
-    const pu = PRICES[poste.value][quality.value];
-    puView.textContent = €(pu);
-    const q = parseFloat(qty.value)||0;
-    totalView.textContent = €(pu*q);
-  }
-  poste.addEventListener('change', ()=>{refreshUnit();recalcExpress();});
-  quality.addEventListener('change', recalcExpress);
-  qty.addEventListener('input', recalcExpress);
-  refreshUnit(); recalcExpress();
-
-  document.getElementById('addToLot').addEventListener('click', ()=>{
-    const lotKey = lots.find(l=>l.name===lotSelect.value).key;
-    const key = poste.value;
-    const line = {
-      key,
-      desc: toDesc(key),
-      unit: unitByKey[key] || 'u',
-      pu: PRICES[key][quality.value],
-      qty: parseFloat(qty.value)||0,
-      note: note.value||''
-    };
-    if(line.qty<=0){ alert("Quantité nulle."); return; }
-    state.lines[lotKey].push(line);
-    qty.value = '0'; note.value='';
-    renderLots();
-  });
-
-  function toDesc(key){
-    const map = {
-      carrelage_sol:'Carrelage sol',
-      faience_mur:'Faïence murale',
-      ragreage:'Ragréage (primaire + application)',
-      peinture_murs_plafonds:'Peinture murs/plafonds',
-      parquet_stratifie:'Parquet stratifié',
-      parquet_contrecolle:'Parquet contrecollé',
-      parquet_massif:'Parquet massif',
-      depose_carrelage:'Dépose carrelage sol',
-      depose_cloison:'Dépose cloison',
-      evacuation_gravats:'Évacuation gravats (m³)',
-      pose_wc:'Pose WC complet',
-      pose_meuble_vasque:'Pose meuble vasque',
-      pose_douche_complete:'Pose douche complète',
-      pose_baignoire:'Pose baignoire',
-      prise:'Pose prise',
-      point_lumineux:'Point lumineux / spot',
-      tableau_elec:'Tableau électrique complet',
-      chaudiere_gaz:'Pose chaudière gaz',
-      chauffe_eau_elec:'Pose chauffe-eau électrique',
-      chauffe_eau_th:'Pose chauffe-eau thermodynamique',
-      radiateur_elec:'Pose radiateur électrique',
-      radiateur_eau:'Pose radiateur eau chaude',
-      seche_serviettes:'Pose sèche-serviettes',
-      plancher_chauffant_hydro:'Plancher chauffant hydraulique',
-      plancher_chauffant_elec:'Plancher chauffant électrique',
-      pac_air_eau:'PAC air/eau',
-      pac_air_air:'PAC air/air (splits)'
-    };
-    return map[key] || key;
+  function euro(n){
+    return (Number(n)||0).toLocaleString('fr-FR', { style: 'currency', currency: 'EUR' });
   }
 
-  // --- Rendu des lots ---
-  const wrap = document.getElementById('lotsContainer');
+  function calc(){
+    const surf = parseFloat(refs.surface.value) || 0;
+    const type = [...refs.typeInputs].find(r=>r.checked).value;
+    const qual = refs.quality.value;
+    const pu = PRICES[type][qual];
+    refs.pu.textContent = euro(pu);
+    refs.total.textContent = euro(surf * pu);
 
-  function renderLots(){
-    let html = '';
-    let grand = 0;
-
-    lots.forEach(lot=>{
-      const rows = state.lines[lot.key];
-      let sub = 0;
-      html += `<div class="card">
-        <div class="lot-head">
-          <div class="lot-title">${lot.name}</div>
-          <div class="muted">${rows.length} ligne(s)</div>
-        </div>
-        <table>
-          <thead>
-            <tr>
-              <th>Description produit</th>
-              <th class="right">PU (€)</th>
-              <th class="right">Qté</th>
-              <th>Remarque</th>
-              <th class="right">Total ligne</th>
-              <th class="no-print"></th>
-            </tr>
-          </thead>
-          <tbody>`;
-
-      rows.forEach((r, i)=>{
-        const total = r.pu * r.qty; sub += total;
-        html += `<tr data-lot="${lot.key}" data-i="${i}">
-          <td>${r.desc}</td>
-          <td class="right"><input type="number" step="0.01" min="0" value="${r.pu}" data-role="pu"></td>
-          <td class="right"><input type="number" step="0.1" min="0" value="${r.qty}" data-role="qty"></td>
-          <td><input type="text" value="${escapeHtml(r.note)}" data-role="note"></td>
-          <td class="right"><span data-role="lineTotal">${€(total)}</span></td>
-          <td class="no-print"><span class="linklike" data-role="del">Supprimer</span></td>
-        </tr>`;
-      });
-
-      const adj = Number(state.adj[lot.key])||0;
-      const lotTotal = sub + adj; grand += lotTotal;
-
-      html += `</tbody>
-          <tfoot>
-            <tr>
-              <td colspan="3"><b>Ajustement (€)</b></td>
-              <td><input type="number" step="0.01" value="${adj}" data-role="adj" data-lot="${lot.key}"></td>
-              <td class="right"><b><span data-role="subTotal">${€(sub)}</span></b></td>
-              <td></td>
-            </tr>
-            <tr>
-              <td colspan="4">
-                <label>Remarque lot</label>
-                <textarea rows="2" data-role="lotNote" data-lot="${lot.key}" placeholder="Ex : contraintes, options, modèles…">${escapeHtml(state.note[lot.key]||'')}</textarea>
-              </td>
-              <td class="right"><div class="pill"><b>Total ${lot.name}</b> : <span data-role="lotTotal">${€(lotTotal)}</span></div></td>
-              <td></td>
-            </tr>
-          </tfoot>
-        </table>
-      </div>`;
-    });
-
-    wrap.innerHTML = html;
-    document.getElementById('grandTotal').textContent = €(grand);
-    persist();
-  }
-
-  function escapeHtml(s){ return String(s).replace(/[&<>"]/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;' }[m])); }
-
-  // Events dans les tables (édition PU/Qte/Note, suppression, ajustement, note lot)
-  wrap.addEventListener('input', e=>{
-    const tr = e.target.closest('tr');
-    if(tr && tr.dataset.lot){
-      const lotKey = tr.dataset.lot, i = +tr.dataset.i;
-      if(e.target.dataset.role==='pu'){ state.lines[lotKey][i].pu = parseFloat(e.target.value)||0; }
-      if(e.target.dataset.role==='qty'){ state.lines[lotKey][i].qty = parseFloat(e.target.value)||0; }
-      if(e.target.dataset.role==='note'){ state.lines[lotKey][i].note = e.target.value; }
-      renderLots();
-      return;
+    // Affichage remarque (sans impact sur le prix)
+    const txt = refs.note.value.trim();
+    if(txt){
+      refs.noteView.style.display = 'block';
+      refs.noteView.textContent = "Remarque : " + txt;
+    }else{
+      refs.noteView.style.display = 'none';
+      refs.noteView.textContent = "";
     }
-    if(e.target.dataset.role==='adj'){
-      const lotKey = e.target.dataset.lot;
-      state.adj[lotKey] = parseFloat(e.target.value)||0;
-      renderLots();
-      return;
-    }
-    if(e.target.dataset.role==='lotNote'){
-      const lotKey = e.target.dataset.lot;
-      state.note[lotKey] = e.target.value;
-      persist(); // pas besoin de re-render
-    }
-  });
-
-  wrap.addEventListener('click', e=>{
-    if(e.target.dataset.role==='del'){
-      const tr = e.target.closest('tr');
-      const lotKey = tr.dataset.lot, i = +tr.dataset.i;
-      state.lines[lotKey].splice(i,1);
-      renderLots();
-    }
-  });
-
-  // En-tête miroir pour PDF
-  ['client','chantier','ref'].forEach(id=>{
-    document.getElementById(id).addEventListener('input', ()=>{
-      document.getElementById('hClient').textContent = document.getElementById('client').value;
-      document.getElementById('hChantier').textContent = document.getElementById('chantier').value;
-      document.getElementById('hRef').textContent = document.getElementById('ref').value;
-      persistHeader();
-    });
-  });
-
-  // Export PDF (via impression)
-  document.getElementById('printPdf').addEventListener('click', ()=>window.print());
-
-  // Export CSV
-  document.getElementById('exportCsv').addEventListener('click', exportCSV);
-
-  function exportCSV(){
-    const rows = [];
-    const sep = ';';
-    const push = a => rows.push(a.map(v=>String(v)).join(sep));
-
-    push(['Client', document.getElementById('client').value || '']);
-    push(['Chantier', document.getElementById('chantier').value || '']);
-    push(['Réf', document.getElementById('ref').value || '']);
-    push([]);
-
-    lots.forEach(lot=>{
-      push([`[${lot.name}]`]);
-      push(['Description','PU','Qté','Remarque','Total ligne']);
-      let sub=0;
-      state.lines[lot.key].forEach(r=>{
-        const total = r.pu*r.qty; sub+=total;
-        push([r.desc, r.pu, r.qty, r.note, total.toFixed(2)]);
-      });
-      push(['Sous-total','','','',sub.toFixed(2)]);
-      push(['Ajustement', state.adj[lot.key], '', state.note[lot.key]||'', (sub+Number(state.adj[lot.key]||0)).toFixed(2)]);
-      push([]);
-    });
-    const grand = document.getElementById('grandTotal').textContent;
-    push(['TOTAL GLOBAL HT','','','', grand]);
-
-    const blob = new Blob(["\ufeff"+rows.join("\n")], {type:"text/csv;charset=utf-8"});
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url; a.download = (document.getElementById('ref').value || 'estimation')+'.csv';
-    a.click(); URL.revokeObjectURL(url);
   }
 
-  // Persistence locale
-  function persist(){
-    localStorage.setItem('mx_lines', JSON.stringify(state));
-  }
-  function persistHeader(){
-    localStorage.setItem('mx_header', JSON.stringify({
-      client: document.getElementById('client').value || '',
-      chantier: document.getElementById('chantier').value || '',
-      ref: document.getElementById('ref').value || ''
-    }));
-  }
-  function restore(){
-    const h = localStorage.getItem('mx_header');
-    if(h){ try{
-      const d=JSON.parse(h);
-      if(d.client) document.getElementById('client').value = d.client;
-      if(d.chantier) document.getElementById('chantier').value = d.chantier;
-      if(d.ref) document.getElementById('ref').value = d.ref;
-      document.getElementById('hClient').textContent = d.client||'';
-      document.getElementById('hChantier').textContent = d.chantier||'';
-      document.getElementById('hRef').textContent = d.ref||'';
-    }catch(e){}}
-    const s = localStorage.getItem('mx_lines');
-    if(s){ try{
-      const d=JSON.parse(s);
-      if(d.lines) state.lines = d.lines;
-      if(d.adj)   state.adj   = d.adj;
-      if(d.note)  state.note  = d.note;
-    }catch(e){}}
-    renderLots();
-  }
+  refs.surface.addEventListener('input', calc);
+  refs.quality.addEventListener('change', calc);
+  refs.note.addEventListener('input', calc);
+  refs.typeInputs.forEach(r => r.addEventListener('change', calc));
 
-  document.getElementById('reset').addEventListener('click', ()=>{
-    if(!confirm('Tout réinitialiser ?')) return;
-    localStorage.removeItem('mx_header');
-    localStorage.removeItem('mx_lines');
-    location.reload();
-  });
-
-  restore();
+  calc();
 </script>
-</body>
-</html>
